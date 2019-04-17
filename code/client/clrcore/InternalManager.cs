@@ -83,16 +83,17 @@ namespace CitizenFX.Core
 		[SecuritySafeCritical]
 		private static Assembly CreateAssemblyInternal(string assemblyFile, byte[] assemblyData, byte[] symbolData)
 		{
-			if (ms_loadedAssemblies.ContainsKey(assemblyFile))
+			var assemblyName = $"{ms_instanceId}.{assemblyFile}";
+			if (ms_loadedAssemblies.ContainsKey(assemblyName))
 			{
-				Debug.WriteLine("Returning previously loaded assembly {0}", ms_loadedAssemblies[assemblyFile].FullName);
-				return ms_loadedAssemblies[assemblyFile];
+				Debug.WriteLine("Returning previously loaded assembly {0}", ms_loadedAssemblies[assemblyName].FullName);
+				return ms_loadedAssemblies[assemblyName];
 			}
 
 			var assembly = Assembly.Load(assemblyData, symbolData);
 			Debug.WriteLine("Loaded {1} into {0}", AppDomain.CurrentDomain.FriendlyName, assembly.FullName);
 
-			ms_loadedAssemblies[assemblyFile] = assembly;
+			ms_loadedAssemblies[assemblyName] = assembly;
 
 			var definedTypes = assembly.GetTypes().Where(t => !t.IsAbstract && t.IsSubclassOf(typeof(BaseScript)));
 

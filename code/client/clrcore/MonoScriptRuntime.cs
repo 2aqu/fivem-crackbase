@@ -13,11 +13,11 @@ namespace CitizenFX.Core
 	{
 		private IScriptHost m_scriptHost;
 		private readonly int m_instanceId;
-		private AppDomain m_appDomain;
 		private InternalManager m_intManager;
 		private IntPtr m_parentObject;
 
 		private static readonly Random ms_random = new Random();
+		private static readonly AppDomain ms_appDomain = AppDomain.CurrentDomain;
 
 		[SecuritySafeCritical]
 		static MonoScriptRuntime()
@@ -51,18 +51,20 @@ namespace CitizenFX.Core
 
 					basePath = Native.API.GetResourcePath(resourceName);
 				}
-#endif
 
-				m_appDomain = AppDomain.CreateDomain($"ScriptDomain_{m_instanceId}", AppDomain.CurrentDomain.Evidence, new AppDomainSetup()
+				// Load required assemblies by resource
+				ms_appDomain.AssemblyResolve += (sender, args) =>
 				{
-#if IS_FXSERVER
-					ApplicationBase = basePath
+					var assemblyPath = Path.Combine(basePath, new AssemblyName(args.Name).Name + ".dll");
+					if (!File.Exists(assemblyPath))
+						return null;
+
+					return Assembly.LoadFile(assemblyPath);
+				};
 #endif
-				});
 
-				m_appDomain.SetupInformation.ConfigurationFile = "dummy.config";
-
-				m_intManager = (InternalManager)m_appDomain.CreateInstanceAndUnwrap(typeof(InternalManager).Assembly.FullName, typeof(InternalManager).FullName);
+				m_intManager = (InternalManager)ms_appDomain.CreateInstanceAndUnwrap(
+					typeof(InternalManager).Assembly.FullName, typeof(InternalManager).FullName);
 
 				// TODO: figure out a cleaner solution to Mono JIT corruption so server doesn't have to be slower
 #if IS_FXSERVER
@@ -86,9 +88,6 @@ namespace CitizenFX.Core
 
 		public void Destroy()
 		{
-			AppDomain.Unload(m_appDomain);
-
-			m_appDomain = null;
 			m_intManager = null;
 		}
 
@@ -139,7 +138,7 @@ namespace CitizenFX.Core
 				m_intManager?.Tick();
 #else
 				// we *shouldn't* do .Id here as that's yet another free remoting call
-				ms_fastTickInDomain.method(m_appDomain);
+				ms_fastTickInDomain.method(ms_appDomain);
 #endif
 			}
 		}
