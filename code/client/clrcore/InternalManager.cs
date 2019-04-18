@@ -92,7 +92,7 @@ namespace CitizenFX.Core
 			}
 
 			var assembly = Assembly.Load(assemblyData, symbolData);
-			Debug.WriteLine("Loaded {1} into {0}", AppDomain.CurrentDomain.FriendlyName, assemblyName);
+			Debug.WriteLine("Loaded {1} into {0}", AppDomain.CurrentDomain.FriendlyName, assembly.FullName);
 
 			ms_loadedAssemblies[assemblyName] = assembly;
 
