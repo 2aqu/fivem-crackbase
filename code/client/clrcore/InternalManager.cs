@@ -83,6 +83,7 @@ namespace CitizenFX.Core
 		[SecuritySafeCritical]
 		private static Assembly CreateAssemblyInternal(string assemblyFile, byte[] assemblyData, byte[] symbolData)
 		{
+			// TODO: Figure out a way to check duplicate assemblies
 			var assemblyName = $"{ms_instanceId}.{assemblyFile}";
 			if (ms_loadedAssemblies.ContainsKey(assemblyName))
 			{
@@ -91,7 +92,7 @@ namespace CitizenFX.Core
 			}
 
 			var assembly = Assembly.Load(assemblyData, symbolData);
-			Debug.WriteLine("Loaded {1} into {0}", AppDomain.CurrentDomain.FriendlyName, assembly.FullName);
+			Debug.WriteLine("Loaded {1} into {0}", AppDomain.CurrentDomain.FriendlyName, assemblyName);
 
 			ms_loadedAssemblies[assemblyName] = assembly;
 
@@ -347,6 +348,7 @@ namespace CitizenFX.Core
 			ms_delays.Add(Tuple.Create(DateTime.UtcNow.AddMilliseconds(delay), callback));
 		}
 
+		// TODO: check whether this function is invoked later
 		public static void TickGlobal()
 		{
 			GlobalManager.Tick();
